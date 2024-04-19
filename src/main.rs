@@ -5,18 +5,18 @@ mod accurate_sleep;
 mod discord_message;
 mod get_member_by_id;
 
-use get_member_by_id::get_name_by_id;
 use discord_message::send_discord_message;
+use get_member_by_id::get_name_by_id;
 use update_events::{update_events};
 use get_next_event::get_next_event;
 use accurate_sleep::accurate_sleep;
 use accept_event::accept_event;
-use std::error::Error;
 use std::fs::{self, File};
 use std::io::prelude::*;
-use std::path::Path;
 use std::{env, process};
 use serde::Deserialize;
+use std::error::Error;
+use std::path::Path;
 
 use chrono::Utc;
 
@@ -139,13 +139,12 @@ fn main() -> Result<(), Box<dyn Error>> {
                         send_discord_message(
                             &config.discord_webhook,
                             format!("API request sent for {}\nWith a total of {} nanoseconds time delay\n Congrats {}!", &header, &time, &user_name).as_str());
-                    } ,
+                    }
                     Err(e) => {
                         println!("Failed to accept event: {}", e);
                         //break; // Exit the loop if accept_event fails
                     }
                 }
-
             }
             Ok(None) => {
                 println!("No more events to process.");
@@ -162,7 +161,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     Ok(())
-
 }
 
 
