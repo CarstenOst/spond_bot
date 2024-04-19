@@ -1,0 +1,1 @@
+Spond bot for accepting predefined invite times
