@@ -1,5 +1,7 @@
 use serde_json::Value;
 use std::{error::Error, fs};
+use std::io::{stdout, Write};
+use std::thread::sleep;
 
 pub(crate) fn get_next_event(filename: &str) -> Result<Option<(String, Option<String>, String)>, Box<dyn Error>> {
     // Read the JSON file
@@ -21,7 +23,7 @@ pub(crate) fn get_next_event(filename: &str) -> Result<Option<(String, Option<St
     let mut min_diff: Option<i64> = None;
     for event in events {
         if let Some(heading) = event.get("heading").and_then(|v| v.as_str()) {
-            if heading.contains("kurs") {
+            if heading.contains("kurs") { // Hardcoded filter... Room for improvements if scaled
                 println!("I'm skipping {:?}", event);
                 continue;
             }
@@ -47,9 +49,11 @@ pub(crate) fn get_next_event(filename: &str) -> Result<Option<(String, Option<St
     if let Some((id, invite_time, header)) = &next_event {
         println!("Next event '{}' ID found: {}, with invite Time: {}", &header.as_str(), &id, &invite_time.as_deref().unwrap_or("none"));
     } else {
-        println!("No next event found, consider shutting off the script and take a summer vacation");
-        panic!("Shutting down ^^^^ ")
-        // TODO make it sleep for a week at a time
+        print!("\rNo next event found, consider shutting off the script and take a summer vacation");
+        //panic!("Shutting down ^^^^ ")
+        print!("\rSleeping for 1 day");
+        stdout().flush().unwrap();
+        sleep(std::time::Duration::from_secs(86400));
     }
 
     Ok(next_event)
