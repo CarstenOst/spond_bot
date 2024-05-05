@@ -120,10 +120,6 @@ fn main() /*-> Result<(), Box<dyn Error>>*/ {
     println!("Starting main script...");
     the_blob_of_logic(&config)
 
-
-
-
-    // Ok(())
 }
 
 
@@ -223,27 +219,3 @@ fn clear_console() {
             .unwrap();
     }
 }
-
-
-
-// unused
-/*
-fn validate_configs(configs: &Vec<ConfigSet>) -> Result<(), &'static str> {
-    for config in configs {
-        if config.bearer_token == "your_bearer_token_here" {
-            return Err("Bearer token has not been set in one of the configurations.");
-        }
-        if config.group_id == "your_group_id_here" {
-            return Err("Group ID has not been set in one of the configurations.");
-        }
-        if config.user_id == "your_user_id_here" {
-            return Err("User ID has not been set in one of the configurations.");
-        }
-        if config.discord_webhook == "none" {
-            return Err("Discord webhook has not been set in one of the configurations.");
-        }
-    }
-    Ok(())
-}
-
- */

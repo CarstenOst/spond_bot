@@ -1,33 +1,9 @@
-use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use crate::structs::get_member_by_id::Event;
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Member {
-    #[serde(rename = "firstName")]
-    first_name: String,
-    #[serde(rename = "lastName")]
-    last_name: String,
-    id: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Group {
-    members: Vec<Member>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Recipient {
-    group: Group,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Event {
-    recipients: Recipient,
-    // Include other fields from your JSON structure as needed
-}
 
 fn read_json<P: AsRef<Path>>(path: P) -> serde_json::Result<Vec<Event>> {
     let mut file = File::open(path).expect("File not found");
