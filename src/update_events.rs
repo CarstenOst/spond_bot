@@ -1,5 +1,5 @@
 use reqwest::blocking::Client;
-use std::{error::Error, fs};
+use std::{error::Error, fs, process};
 use serde_json::{json, Value};
 
 pub(crate) fn update_events(url: &str, bearer_token: &str) -> Result<(), Box<dyn Error>> {
@@ -32,7 +32,9 @@ pub(crate) fn update_events(url: &str, bearer_token: &str) -> Result<(), Box<dyn
         // If the response is not successful, print the status code
         println!("Error: API request failed with status code {}, ", response.status());
         println!("Check that your bearer token '{}' is correct", bearer_token);
-        println!("Check that ur group ID is correct in this url: {}", url)
+        println!("Check that ur group ID is correct in this url: {}", url);
+        println!("Shutting down because api call wont work with any of these faults.");
+        process::exit(1);
     }
 
     Ok(())
