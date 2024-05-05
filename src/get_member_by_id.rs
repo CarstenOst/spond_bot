@@ -39,7 +39,6 @@ fn read_json<P: AsRef<Path>>(path: P) -> serde_json::Result<Vec<Event>> {
 
 pub(crate) fn get_name_by_id(file_path: &str, id: &str) -> Option<(String, String)> {
     let events: Vec<Event> = read_json(file_path).expect("Failed to parse JSON");
-
     for event in events {
         for member in event.recipients.group.members {
             if member.id == id {
@@ -47,6 +46,5 @@ pub(crate) fn get_name_by_id(file_path: &str, id: &str) -> Option<(String, Strin
             }
         }
     }
-
     None
 }
