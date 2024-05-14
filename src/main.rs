@@ -6,21 +6,20 @@ mod accurate_sleep;
 mod discord_message;
 mod get_member_by_id;
 
-
+use structs::config::{Config, ConfigSet};
 use discord_message::send_discord_message;
 use get_member_by_id::get_name_by_id;
 use update_events::{update_events};
 use get_next_event::get_next_event;
 use accurate_sleep::accurate_sleep;
-use accept_event::accept_event;
+use accept_event::{accept_event, accept_event_async};
 use std::fs::{self, File};
 use std::io::prelude::*;
 use std::{env, process};
 use std::error::Error;
 use std::path::Path;
-use structs::config::{Config, ConfigSet};
 
-use chrono::Utc;
+use chrono::{TimeDelta, Utc};
 
 // DB736DCD48454137B16355ED7AB7AC50
 const ACCEPT_URL_BASE: &str = "https://api.spond.com/core/v1/sponds/";
@@ -110,23 +109,26 @@ fn hello(configs: &Config) {
 }
 
 
+
 fn main() /*-> Result<(), Box<dyn Error>>*/ {
     clear_console();
-
     let config: Config = read_config().unwrap();
-
     setup(&config);
 
     println!("Starting main script...");
-    the_blob_of_logic(&config)
+    tokio::runtime::Runtime::new().unwrap().block_on(main_async(&config));
 
 }
 
+async fn main_async(config: &Config) {
+    the_blob_of_logic(&config).await;
+}
 
-fn the_blob_of_logic(configs: &Config) {
+
+async fn the_blob_of_logic(configs: &Config) {
     // Retrieve the first configuration if available, and end the process if not
     let first_config = match configs.config.get(0) {
-        Some(config) => config,
+        Some(config) => config.clone(),  // Cloning the config safely
         None => {
             println!("No configuration sets are available.");
             process::exit(1);
@@ -136,32 +138,19 @@ fn the_blob_of_logic(configs: &Config) {
     hello(&configs);
 
     loop {
-        update_event_build(&first_config); // should only happen once per loop
+        let config_clone = first_config.clone();
+        tokio::task::spawn_blocking(move || {
+            update_event_build(&config_clone);
+        }).await.unwrap_or_else(|e| {
+            println!("Failed to update event build: {}", e);
+            return;
+        });
         match get_next_event("events.json") {
             Ok(Some((id, Some(invite_time), header))) => {
                 let url = format!("{}/{}/responses/{}", ACCEPT_URL_BASE, id, &first_config.user_id);
                 let time_accuracy = accurate_sleep(&invite_time); // Sleep until the event starts
-                for config in &configs.config {
-                    let user_name = get_name_by_id("response.json", &config.user_id)
-                        .map(|(first, last)| format!("{} {}", first, last))
-                        .unwrap_or("No user found".to_string());
-
-                    match accept_event(&url, &config.bearer_token) {
-                        Ok(_) => {
-                            let time = &time_accuracy.num_nanoseconds().unwrap().abs();
-                            println!("API request sent for {}\nWith a total of {} nanoseconds time delay\n Congrats {}!", &header, &time, &user_name);
-                            send_discord_message(
-                                &config.discord_webhook,
-                                format!("API request sent for {}\nWith a total of {} nanoseconds time delay\n Congrats {}!", &header, &time, &user_name).as_str());
-                        }
-                        Err(e) => {
-                            println!("Failed to accept event: {}", e);
-                            //break; // Exit the loop if accept_event fails
-                        }
-                    }
+                accept_all(&configs, &url, &time_accuracy, &header).await;
                 }
-
-            }
             Ok(None) => {
                 println!("No more events to process.");
                 send_discord_message(&first_config.discord_webhook, "No more events to process");
@@ -177,6 +166,28 @@ fn the_blob_of_logic(configs: &Config) {
     }
 }
 
+
+async fn accept_all(configs: &Config,url: &String, time_accuracy: &TimeDelta, header: &String) {
+    for config in &configs.config {
+        let user_name = get_name_by_id("response.json", &config.user_id)
+            .map(|(first, last)| format!("{} {}", first, last))
+            .unwrap_or("No user found".to_string());
+
+        match accept_event_async(&url, &config.bearer_token).await {
+            Ok(_) => {
+                let time = &time_accuracy.num_nanoseconds().unwrap().abs();
+                println!("API request sent for {}\nWith a total of {} nanoseconds time delay\n Congrats {}!", &header, &time, &user_name);
+                send_discord_message(
+                    &config.discord_webhook,
+                    format!("API request sent for {}\nWith a total of {} nanoseconds time delay\n Congrats {}!", &header, &time, &user_name).as_str());
+            }
+            Err(e) => {
+                println!("Failed to accept event: {}", e);
+                //break; // Exit the loop if accept_event fails
+            }
+        }
+    }
+}
 
 fn is_config_correct(url: &str, bt: &str) -> bool {
     match accept_event(url, bt) {
