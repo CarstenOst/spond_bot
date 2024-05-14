@@ -144,7 +144,7 @@ async fn the_blob_of_logic(configs: &Config) {
         }).await.unwrap_or_else(|e| {
             println!("Failed to update event build: {}", e);
             return;
-        });
+        }); // Stop async execution to update events
         match get_next_event("events.json") {
             Ok(Some((id, Some(invite_time), header))) => {
                 let url = format!("{}/{}/responses/{}", ACCEPT_URL_BASE, id, &first_config.user_id);
