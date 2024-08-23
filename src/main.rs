@@ -7,7 +7,7 @@ mod discord_message;
 mod get_member_by_id;
 
 use structs::config::{Config, ConfigSet};
-use discord_message::send_discord_message;
+use discord_message::send_discord_message_async;
 use get_member_by_id::get_name_by_id;
 use update_events::{update_events};
 use get_next_event::get_next_event;
@@ -153,12 +153,12 @@ async fn the_blob_of_logic(configs: &Config) {
                 }
             Ok(None) => {
                 println!("No more events to process.");
-                send_discord_message(&first_config.discord_webhook, "No more events to process");
+                send_discord_message_async(&first_config.discord_webhook, "No more events to process").await;
                 break; // Exit the loop if there are no more events
             }
             Err(e) => {
                 println!("Error getting next event: {}", e);
-                send_discord_message(&first_config.discord_webhook, format!("Error getting next event: {}\nYou should do it manually to still get a spot", e).as_str());
+                send_discord_message_async(&first_config.discord_webhook, format!("Error getting next event: {}\nYou should do it manually to still get a spot", e).as_str()).await;
                 break; // Exit the loop on error
             }
             _ => {}
@@ -177,9 +177,9 @@ async fn accept_all(configs: &Config,url: &String, time_accuracy: &TimeDelta, he
             Ok(_) => {
                 let time = &time_accuracy.num_nanoseconds().unwrap().abs();
                 println!("API request sent for {}\nWith a total of {} nanoseconds time delay\n Congrats {}!", &header, &time, &user_name);
-                send_discord_message(
+                send_discord_message_async(
                     &config.discord_webhook,
-                    format!("API request sent for {}\nWith a total of {} nanoseconds time delay\n Congrats {}!", &header, &time, &user_name).as_str());
+                    format!("API request sent for {}\nWith a total of {} nanoseconds time delay\n Congrats {}!", &header, &time, &user_name).as_str()).await;
             }
             Err(e) => {
                 println!("Failed to accept event: {}", e);
