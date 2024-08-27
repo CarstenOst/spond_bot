@@ -44,7 +44,7 @@ fn read_config() -> Result<Config, Box<dyn Error>> {
         let default_config = r#"
 [[config]]
 bearer_token = "your_bearer_token_here"
-group_id = "your_group_id_here"
+group_id = "E79144C9D1904A6484DF1A03C9B29BA9"
 user_id = "your_user_id_here"
 discord_webhook = "none"
 "#;
